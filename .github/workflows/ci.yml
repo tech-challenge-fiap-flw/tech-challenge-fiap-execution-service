@@ -1,4 +1,4 @@
-name: OS Service CI/CD
+name: Execution Service CI/CD
 
 on:
   push:
@@ -49,13 +49,13 @@ jobs:
 
       - name: Create ECR repository (if not exists)
         run: |
-          aws ecr describe-repositories --repository-names execcution-service --region ${{ secrets.AWS_REGION }} 2>/dev/null || \
-          aws ecr create-repository --repository-name execcution-service --region ${{ secrets.AWS_REGION }}
+          aws ecr describe-repositories --repository-names execution-service --region ${{ secrets.AWS_REGION }} 2>/dev/null || \
+          aws ecr create-repository --repository-name execution-service --region ${{ secrets.AWS_REGION }}
 
       - name: Build and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: execcution-service
+          ECR_REPOSITORY: execution-service
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -109,22 +109,22 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          sed -i "s|image: execcution-service:latest|image: $ECR_REGISTRY/execcution-service:$IMAGE_TAG|" k8s/deployment.yaml
+          sed -i "s|image: execution-service:latest|image: $ECR_REGISTRY/execution-service:$IMAGE_TAG|" k8s/deployment.yaml
           cat k8s/deployment.yaml
           kubectl apply -f k8s/configmap.yaml
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/hpa.yaml
-          kubectl rollout status deployment/execcution-service --timeout=300s
+          kubectl rollout status deployment/execution-service --timeout=300s
 
       - name: Debug on failure
         if: failure()
         run: |
           echo "=== Pod Status ==="
-          kubectl get pods -l app=execcution-service -o wide
+          kubectl get pods -l app=execution-service -o wide
           echo "=== Pod Events ==="
-          kubectl describe pods -l app=execcution-service | grep -A 20 "Events:"
+          kubectl describe pods -l app=execution-service | grep -A 20 "Events:"
           echo "=== Pod Logs ==="
-          kubectl logs -l app=execcution-service --tail=50 --all-containers=true 2>/dev/null || echo "No logs available"
+          kubectl logs -l app=execution-service --tail=50 --all-containers=true 2>/dev/null || echo "No logs available"
           echo "=== Deployment Status ==="
-          kubectl describe deployment execcution-service | tail -30
+          kubectl describe deployment execution-service | tail -30
