@@ -92,6 +92,10 @@ npm test
 npm run test:coverage
 ```
 
+## Captura de testes
+
+![Testes unitários](teste-unitario.png)
+
 ## Deploy
 
 ```bash
